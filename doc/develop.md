@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"update-to-match-new-io-interface "
+git commit -am"minor-update "
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "update-to-match-new-io-interface " --body " "
+gh pr create --base main --title "minor-update " --body " "
 ```
 
 ## Code review

@@ -270,21 +270,7 @@ describe('IoSqlite', () => {
       };
 
       await ioSql.createOrExtendTable({ tableCfg: tableCfg1 });
-      const result1 = ioSql.db.exec(
-        "SELECT name FROM sqlite_master WHERE type='table'",
-      );
-      console.log(result1);
-
-      const result1Json = JSON.parse(JSON.stringify(result1));
-      console.log(`result1Json: ${JSON.stringify(result1Json)}`);
-      const tableNames = result1Json[0]?.values?.map((v: any[]) => v[0]) ?? [];
-      console.log('Extracted table names:', tableNames);
-
       await ioSql.createOrExtendTable({ tableCfg: tableCfg2 });
-      const result2 = ioSql.db.exec(
-        "SELECT name FROM sqlite_master WHERE type='table'",
-      );
-      console.log(result2);
 
       // Retrieve all table keys
       const tableKeys = await ioSql.alltableKeys();
