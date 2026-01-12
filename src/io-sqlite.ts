@@ -21,9 +21,20 @@ import {
 
 import initSqlJs, { Database } from 'sql.js';
 
+import sqliteUrl from './assets/sql-wasm.wasm?url';
 import { SqlStatements } from './sql-statements.ts';
 
-const SQL = await initSqlJs();
+const projectPath = new URL('..', import.meta.url).pathname;
+/* v8 ignore next -- @preserve */
+const pathWithoutDisk = (
+  projectPath.endsWith('/')
+    ? projectPath + sqliteUrl.replace(/^\//, '')
+    : projectPath + '/' + sqliteUrl.replace(/^\//, '')
+).substring(3);
+
+const SQL = initSqlJs({
+  locateFile: () => pathWithoutDisk,
+});
 
 export class IoSqlite implements Io {
   private _ioTools!: IoTools;
@@ -35,7 +46,8 @@ export class IoSqlite implements Io {
   }
 
   async init(): Promise<void> {
-    this.db = new SQL.Database();
+    // const SQL = await initSql();
+    this.db = new (await SQL).Database();
     this._isOpen = true;
     this._ioTools = new IoTools(this);
     this._initTableCfgs();
@@ -131,7 +143,6 @@ export class IoSqlite implements Io {
   async alltableKeys(): Promise<string[]> {
     const returnValue = this.db.exec(this._sql.tableKeys)[0].values;
     const returnValueStr = returnValue.map((row: any) => String(row[0]));
-    console.log('Extracted table keys:', returnValueStr);
     // remove the suffixes
     const tableKeys = returnValueStr.map((key) =>
       this._map.removeTableSuffix(key),

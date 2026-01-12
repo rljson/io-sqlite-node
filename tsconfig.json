@@ -11,13 +11,14 @@
     "rootDir": "src",
     "outDir": "dist/",
     "declaration": true,
+    "sourceMap": true,
     "noEmitOnError": true,
     "emitDeclarationOnly": false,
     "esModuleInterop": true,
     "noEmit": true,
 
     /* Bundler mode */
-    "moduleResolution": "nodenext",
+    "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
