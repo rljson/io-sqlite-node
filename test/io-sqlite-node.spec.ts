@@ -152,7 +152,7 @@ describe('IoSqlLiteNode', () => {
         expect(sVN.undeletedFile).toBeDefined();
       }
     });
-    it('should not throw an errr if file does not exist', async () => {
+    it('should not throw an error if file does not exist', async () => {
       await sVN.init();
       await sVN.close();
       await unlink((sVN as any)._dbFileName);
