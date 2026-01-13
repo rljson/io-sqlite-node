@@ -18,7 +18,7 @@ import {
   TableType,
 } from '@rljson/rljson';
 
-import { existsSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
 import { dirname, isAbsolute } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -87,15 +87,16 @@ export class IoSqliteNode implements Io {
       let deleted = false;
       for (let attempt = 1; attempt <= 5; attempt++) {
         try {
-          if (!existsSync(this._dbFileName!)) {
-            deleted = true;
-            break;
-          }
           await unlink(this._dbFileName!);
           console.log(`Deleted database file: ${this._dbFileName!}`);
           deleted = true;
           break;
-        } catch {
+        } catch (error: any) {
+          // v8 ignore next -- @preserve
+          if (error.code === 'ENOENT') {
+            deleted = true;
+            break;
+          }
           // v8 ignore next -- @preserve
           if (attempt < 5) {
             await new Promise((resolve) => setTimeout(resolve, 100));
