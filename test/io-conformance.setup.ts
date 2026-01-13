@@ -6,7 +6,7 @@
 
 import { Io, IoTestSetup } from '@rljson/io';
 
-import { IoSqlite } from '../src/io-sqlite';
+import { IoSqliteNode } from '../src/io-sqlite-node';
 
 // ..............................................................................
 class MyIoTestSetup implements IoTestSetup {
@@ -15,12 +15,12 @@ class MyIoTestSetup implements IoTestSetup {
   }
 
   async beforeEach(): Promise<void> {
-    const sqlite = await IoSqlite.example();
+    const sqlite = await IoSqliteNode.example();
     this._io = sqlite;
   }
 
   async afterEach(): Promise<void> {
-    (this.io as IoSqlite).deleteDatabase();
+    await (this.io as IoSqliteNode).deleteDatabase();
   }
 
   async afterAll(): Promise<void> {

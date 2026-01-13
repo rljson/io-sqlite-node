@@ -47,7 +47,9 @@ export class SqlStatements {
   }
 
   rowCount(tableKey: string) {
-    return `SELECT COUNT(*) FROM ${this._map.addTableSuffix(tableKey)}`;
+    return `SELECT COUNT(*) AS RECORDCOUNT FROM ${this._map.addTableSuffix(
+      tableKey,
+    )}`;
   }
 
   allData(tableKey: string, namedColumns?: string) {
@@ -144,7 +146,7 @@ export class SqlStatements {
   contentType(): string {
     const sourceTable = this._map.addTableSuffix(this._map.tableNames.main);
     const resultCol = this._map.addColumnSuffix('type');
-    const sql = `SELECT ${resultCol} FROM [${sourceTable}] WHERE key_col =?`;
+    const sql = `SELECT ${resultCol} as contentType FROM [${sourceTable}] WHERE key_col =?`;
     return sql;
   }
 
@@ -156,7 +158,7 @@ export class SqlStatements {
     const columnsSql = columnKeysWithPostfix.join(', ');
     const valuesSql = '?, '.repeat(columnKeys.length - 1) + '?';
 
-    return `INSERT INTO ${this._map.addTableSuffix(
+    return `INSERT OR IGNORE INTO ${this._map.addTableSuffix(
       this._map.tableNames.main,
     )} ( ${columnsSql} ) VALUES (${valuesSql})`;
   }
@@ -204,7 +206,7 @@ export class SqlStatements {
 
   fillTable(tableKey: string, commonColumns: string) {
     // select only those columns that are in both tables
-    return `INSERT INTO ${this._map.addTableSuffix(
+    return `INSERT OR IGNORE INTO ${this._map.addTableSuffix(
       tableKey,
     )} (${commonColumns}) SELECT ${commonColumns} FROM ${this._map.addTmpSuffix(
       tableKey,
@@ -245,9 +247,9 @@ export class SqlStatements {
     const conKey = `${this._map.addColumnSuffix(
       this._map.primaryKeyColumn,
     )} TEXT`;
-    const primaryKey = `${conKey} PRIMARY KEY`;
+    const primaryKey = `${conKey} PRIMARY KEY NOT NULL`;
     const colsWithPrimaryKey = sqlCreateColumns.replace(conKey, primaryKey);
-    return `CREATE TABLE ${sqltableKey} (${colsWithPrimaryKey})`;
+    return `CREATE TABLE IF NOT EXISTS ${sqltableKey} (${colsWithPrimaryKey})`;
   }
 
   alterTable(tableKey: TableKey, addedColumns: ColumnCfg[]): string[] {
