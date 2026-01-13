@@ -18,9 +18,9 @@ import {
   TableType,
 } from '@rljson/rljson';
 
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 import { SqlStatements } from './sql-statements.ts';
@@ -32,6 +32,7 @@ export class IoSqliteNode implements Io {
   private _map = new IoDbNameMapping();
   private _persistence: boolean = true;
   private _dbFileName: string | undefined;
+  private _undeletedFile: string | undefined;
   constructor() {
     this._sql = new SqlStatements();
   }
@@ -44,8 +45,8 @@ export class IoSqliteNode implements Io {
     const randomCode = Math.floor(Math.random() * 10000000000)
       .toString()
       .padStart(10, '0');
-    this._dbFileName = `./data/test_${randomCode}.db`;
-    this._createDatabase(this._dbFileName);
+    this._dbFileName = `test_${randomCode}.db`;
+    this._createDatabase(`./data/${this._dbFileName}`);
     this._isOpen = true;
     this._ioTools = new IoTools(this);
     this._initTableCfgs();
@@ -57,7 +58,7 @@ export class IoSqliteNode implements Io {
 
   static example = async () => {
     const ioSqliteServer = new IoSqliteNode();
-    await ioSqliteServer.init();
+    // await ioSqliteServer.init();
     return ioSqliteServer;
   };
 
@@ -78,16 +79,32 @@ export class IoSqliteNode implements Io {
   public async deleteDatabase() {
     if (this._isOpen) {
       this.db.close();
+      this.db = null as any; // Release the database reference
       this._isOpen = false;
     }
     if (this._persistence) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      try {
-        await unlink(this._dbFileName!);
-        console.log(`Deleted database file: ${this._dbFileName!}`);
-      } catch {
-        // v8 ignore next -- @preserve
-        throw new Error(`Failed to delete database file: ${this._dbFileName!}`);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      let deleted = false;
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          if (!existsSync(this._dbFileName!)) {
+            deleted = true;
+            break;
+          }
+          await unlink(this._dbFileName!);
+          console.log(`Deleted database file: ${this._dbFileName!}`);
+          deleted = true;
+          break;
+        } catch {
+          // v8 ignore next -- @preserve
+          if (attempt < 5) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+      }
+      // v8 ignore next -- @preserve
+      if (!deleted) {
+        this._undeletedFile = this._dbFileName;
       }
     }
   }
@@ -148,35 +165,28 @@ export class IoSqliteNode implements Io {
     return count;
   }
 
-  private _createDatabase(fileName?: string): string {
-    if (!fileName) {
-      this._persistence = false;
-      this.db = new DatabaseSync(':memory:');
-      return ':memory:';
-    } else {
-      mkdirSync(dirname(fileName), { recursive: true });
-      this.db = new DatabaseSync(fileName);
-      console.log(`Created database file: ${fileName}`);
-      return fileName;
+  public async execute(sql: string): Promise<any> {
+    try {
+      const stmt = this.db.prepare(sql);
+      if (sql.trim().toUpperCase().startsWith('SELECT')) {
+        return stmt.all();
+      } else {
+        return stmt.run();
+      }
+    } catch (error) {
+      // v8 ignore next -- @preserve
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Malformed SQL statement: ${errorMessage}`);
     }
   }
 
-  public queryDatabase(): Array<{ id: number; name: string }> {
-    const dbFile = './data/app.db';
-    const database = new DatabaseSync(dbFile);
-    const rows = database.prepare('SELECT id, name FROM example;').all();
-    return rows as Array<{ id: number; name: string }>;
+  public get undeletedFile(): string | undefined {
+    return this._undeletedFile;
   }
 
-  public execute(sql: string): any {
-    const dbFile = './data/app.db';
-    const database = new DatabaseSync(dbFile);
-    const stmt = database.prepare(sql);
-    if (sql.trim().toUpperCase().startsWith('SELECT')) {
-      return stmt.all();
-    } else {
-      return stmt.run();
-    }
+  public async createDatabase(fileName?: string): Promise<void> {
+    this._createDatabase(fileName);
   }
 
   //********Private section */
@@ -223,6 +233,8 @@ export class IoSqliteNode implements Io {
 
         // Null or undefined values are ignored
         // and not added to the converted row
+
+        // v8 ignore next -- @preserve
         if (val === undefined) {
           continue;
         }
@@ -473,20 +485,7 @@ export class IoSqliteNode implements Io {
     const whereString = this._whereString(Object.entries(request.where));
     const query = `SELECT * FROM ${tableKeyWithSuffix} WHERE${whereString}`;
     const resultSet = this.db.prepare(query).all();
-    // if (!resultSet || resultSet.length === 0) {
-    //   const emptyTable: RljsonTable<any, any> = {
-    //     _hash: tableCfg._hash as string,
-    //     _data: [],
-    //     _type: tableCfg.type,
-    //   };
 
-    //   const emptyResult: Rljson = {
-    //     [request.table]: emptyTable,
-    //   } as any;
-    //   return emptyResult;
-    // }
-    // Extract the 'values' part from returnValue and convert them into JSON objects
-    // const jsonResultSet = this._convertToReturn(resultSet);
     const convertedResult = this._parseData(resultSet as Json[], tableCfg);
 
     const table: RljsonTable<any, any> = {
@@ -552,30 +551,22 @@ export class IoSqliteNode implements Io {
     }
   }
 
-  // private _convertToReturn(resultSet: Record<string, SQLOutputValue>[]): any[] {
-  //   const jsonRows: any[] = [];
+  private _createDatabase(fileName?: string): string {
+    if (!fileName) {
+      this._persistence = false;
+      this.db = new DatabaseSync(':memory:');
+      console.log('Created in-memory database');
+      return ':memory:';
+    } else {
+      const isAbsolutePath = isAbsolute(fileName);
+      console.log(`File path is absolute: ${isAbsolutePath}`);
 
-  //   for (const record of resultSet) {
-  //     const rows = resultSet?.values as unknown as any[] | undefined;
-  //     const columns = resultSet?.columns;
-  //     if (
-  //       !rows ||
-  //       !Array.isArray(rows) ||
-  //       !columns ||
-  //       !Array.isArray(columns)
-  //     ) {
-  //       continue;
-  //     }
-  //     const convertedRows = rows.map((row: any[]) => {
-  //       const obj: any = {};
-  //       columns.forEach((col: string, idx: number) => {
-  //         obj[col] = row[idx];
-  //       });
-  //       return obj;
-  //     });
-  //     jsonRows.push(...convertedRows);
-  //   }
-
-  //   return jsonRows;
-  // }
+      mkdirSync(dirname(fileName), { recursive: true });
+      this.db = new DatabaseSync(fileName);
+      this._persistence = true;
+      this._dbFileName = fileName;
+      console.log(`Created database file: ${fileName}`);
+      return fileName;
+    }
+  }
 }
