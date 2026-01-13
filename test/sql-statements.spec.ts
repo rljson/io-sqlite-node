@@ -64,7 +64,7 @@ describe('SQlStatements', () => {
   });
 
   test('createMainTable generates correct query', () => {
-    const expectedQuery = `CREATE TABLE tableCfgs_tbl (_hash_col TEXT PRIMARY KEY, key_col TEXT, type_col TEXT, isHead_col INTEGER, isRoot_col INTEGER, isShared_col INTEGER, previous_col TEXT, columns_col TEXT)`;
+    const expectedQuery = `CREATE TABLE IF NOT EXISTS tableCfgs_tbl (_hash_col TEXT PRIMARY KEY NOT NULL, key_col TEXT, type_col TEXT, isHead_col INTEGER, isRoot_col INTEGER, isShared_col INTEGER, previous_col TEXT, columns_col TEXT)`;
     expect(sql.createTableCfgsTable).toBe(expectedQuery);
   });
 
@@ -99,7 +99,7 @@ describe('SQlStatements', () => {
   test('fillTable generates correct query', () => {
     const tableKey = 'testTable';
     const commonColumns = 'column1, column2';
-    const expectedQuery = `INSERT INTO testTable_tbl (column1, column2) SELECT column1, column2 FROM testTable_tmp`;
+    const expectedQuery = `INSERT OR IGNORE INTO testTable_tbl (column1, column2) SELECT column1, column2 FROM testTable_tmp`;
     expect(sql.fillTable(tableKey, commonColumns)).toBe(expectedQuery);
   });
 
@@ -175,15 +175,45 @@ describe('SQlStatements', () => {
     expect(statement).toBe(expectedQuery);
   });
 
+  test('tableCfg generates correct query', () => {
+    const expectedQuery = sql.tableCfg;
+    expect(expectedQuery).toBe(`SELECT * FROM tableCfgs_tbl WHERE key_col = ?`);
+  });
+
   test('tableCfgs generates correct query', () => {
     const expectedQuery = sql.tableCfgs;
     expect(expectedQuery).toBe(`SELECT * FROM tableCfgs_tbl`);
+  });
+
+  test('tableCfg generates correct query', () => {
+    const expectedQuery = sql.tableCfg;
+    expect(expectedQuery).toBe(`SELECT * FROM tableCfgs_tbl WHERE key_col = ?`);
+  });
+
+  test('contentType generates correct query', () => {
+    const expectedQuery = sql.contentType();
+    expect(expectedQuery).toBe(
+      'SELECT type_col as contentType FROM [tableCfgs_tbl] WHERE key_col =?',
+    );
+  });
+
+  test('tableExists generates correct query', () => {
+    const expectedQuery = sql.tableExists();
+    expect(expectedQuery).toBe(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name=?;`,
+    );
   });
 
   test('allData generates correct query', () => {
     const tableKey = 'testTable';
     const expectedQuery = `SELECT * FROM testTable`;
     expect(sql.allData(tableKey)).toBe(expectedQuery);
+  });
+
+  test('allData generates correct query with different table names', () => {
+    expect(sql.allData('users')).toBe(`SELECT * FROM users`);
+    expect(sql.allData('products_tbl')).toBe(`SELECT * FROM products_tbl`);
+    expect(sql.allData('catalogLayers')).toBe(`SELECT * FROM catalogLayers`);
   });
 
   test('tableKey', () => {
@@ -207,7 +237,7 @@ describe('SQlStatements', () => {
 
   test('rowCount generates correct query', () => {
     const tableKey = 'testTable';
-    const expectedQuery = `SELECT COUNT(*) FROM testTable_tbl`;
+    const expectedQuery = `SELECT COUNT(*) AS RECORDCOUNT FROM testTable_tbl`;
     expect(sql.rowCount(tableKey)).toBe(expectedQuery);
   });
 
@@ -240,5 +270,26 @@ describe('SQlStatements', () => {
     const whereClause = "column1 = 'value'";
     const expectedQuery = `SELECT ${columns} FROM ${tableKey} WHERE ${whereClause}`;
     expect(sql.selection(tableKey, columns, whereClause)).toBe(expectedQuery);
+  });
+
+  test('insertTableCfg generates correct query', () => {
+    const expectedQuery =
+      'INSERT OR IGNORE INTO tableCfgs_tbl ( _hash_col, key_col, type_col, isHead_col, isRoot_col, isShared_col, previous_col, columns_col ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    const actualQuery = sql.insertTableCfg();
+    expect(actualQuery).toBe(expectedQuery);
+  });
+
+  test('allData generates correct query with named columns', () => {
+    const tableKey = 'testTable';
+    const namedColumns = 'column1, column2';
+    const expectedQuery = `SELECT column1, column2 FROM testTable`;
+    expect(sql.allData(tableKey, namedColumns)).toBe(expectedQuery);
+  });
+
+  test('allData generates correct query without columns', () => {
+    const tableKey = 'testTable';
+    const namedColumns = '';
+    const expectedQuery = `SELECT * FROM testTable`;
+    expect(sql.allData(tableKey, namedColumns)).toBe(expectedQuery);
   });
 });
