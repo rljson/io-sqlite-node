@@ -4,64 +4,87 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { unlink } from 'fs/promises';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { IoSqliteNode } from '../src/io-sqlite-node';
 
 describe('IoSqlLiteNode', () => {
   let sVN: IoSqliteNode;
   beforeEach(async () => {
-    sVN = new IoSqliteNode();
+    const sqlite = await IoSqliteNode.example();
+    sVN = sqlite;
     await sVN.init();
   });
 
+  afterEach(async () => {
+    await sVN.deleteDatabase();
+    if (sVN.undeletedFile) {
+      console.warn(
+        `Warning: Database file was not deleted: ${sVN.undeletedFile}`,
+      );
+    }
+  });
+
   describe('execute', () => {
-    it('should create a table', () => {
-      sVN.execute('DROP TABLE IF EXISTS users');
-      const result = sVN.execute(
+    it('should create a table', async () => {
+      await sVN.execute('DROP TABLE IF EXISTS users');
+      const result = await sVN.execute(
         'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)',
       );
       expect(result).toBeDefined();
     });
 
-    it('should insert data', () => {
-      const result = sVN.execute("INSERT INTO users (name) VALUES ('Alice')");
+    it('should insert data', async () => {
+      await sVN.execute(
+        'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)',
+      );
+      const result = await sVN.execute(
+        "INSERT INTO users (name) VALUES ('Alice')",
+      );
       expect(result).toBeDefined();
     });
 
-    it('should select data', () => {
-      const result = sVN.execute('SELECT * FROM users');
+    it('should select data', async () => {
+      await sVN.execute(
+        'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)',
+      );
+      const result = await sVN.execute('SELECT * FROM users');
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
   });
 
   describe('database operations', () => {
-    it('should handle multiple sequential queries', () => {
-      sVN.execute('DROP TABLE IF EXISTS test');
-      sVN.execute('CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT)');
-      sVN.execute("INSERT INTO test (value) VALUES ('first')");
-      sVN.execute("INSERT INTO test (value) VALUES ('second')");
-      const result = sVN.execute('SELECT COUNT(*) as count FROM test');
+    it('should handle multiple sequential queries', async () => {
+      await sVN.execute('DROP TABLE IF EXISTS test');
+      await sVN.execute(
+        'CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT)',
+      );
+      await sVN.execute("INSERT INTO test (value) VALUES ('first')");
+      await sVN.execute("INSERT INTO test (value) VALUES ('second')");
+      const result = await sVN.execute('SELECT COUNT(*) as count FROM test');
       expect(result[0].count).toBe(2);
     });
 
-    it('should return empty result for SELECT with no data', () => {
-      sVN.execute('DROP TABLE IF EXISTS empty');
-      sVN.execute('CREATE TABLE empty (id INTEGER PRIMARY KEY)');
-      const result = sVN.execute('SELECT * FROM empty');
+    it('should return empty result for SELECT with no data', async () => {
+      await sVN.execute('DROP TABLE IF EXISTS empty');
+      await sVN.execute('CREATE TABLE empty (id INTEGER PRIMARY KEY)');
+      const result = await sVN.execute('SELECT * FROM empty');
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(0);
     });
   });
 
   describe('error handling', () => {
-    it('should handle syntax errors gracefully', () => {
-      expect(() => sVN.execute('INVALID SQL QUERY')).toThrow();
+    it('should handle syntax errors gracefully', async () => {
+      await expect(sVN.execute('INVALID SQL QUERY')).rejects.toThrow();
     });
 
-    it('should handle non-existent table errors', () => {
-      expect(() => sVN.execute('SELECT * FROM nonexistent_table')).toThrow();
+    it('should handle non-existent table errors', async () => {
+      await expect(
+        sVN.execute('SELECT * FROM nonexistent_table'),
+      ).rejects.toThrow();
     });
   });
   describe('status properties', () => {
@@ -93,6 +116,7 @@ describe('IoSqlLiteNode', () => {
 
     it('example instance should be operational', async () => {
       const example = await IoSqliteNode.example();
+      await example.init();
       const result = example.isOpen;
       expect(result).toBe(true);
     });
@@ -111,6 +135,44 @@ describe('IoSqlLiteNode', () => {
       const dump = await sVN.dumpTable({ table: 'tableCfgs' });
       expect(dump).toBeDefined();
       expect(typeof dump).toBe('object');
+    });
+  });
+
+  describe('file deletion', () => {
+    it('should delete the database file', async () => {
+      await sVN.init();
+      await sVN.deleteDatabase();
+      expect(sVN.undeletedFile).toBeUndefined();
+    });
+    it('should set undeletedFile if deletion fails', async () => {
+      await sVN.init();
+      await sVN.deleteDatabase();
+      // If file still exists, undeletedFile should be set
+      if (sVN.undeletedFile) {
+        expect(sVN.undeletedFile).toBeDefined();
+      }
+    });
+    it('should not throw an errr if file does not exist', async () => {
+      await sVN.init();
+      await sVN.close();
+      await unlink((sVN as any)._dbFileName);
+      await expect(sVN.deleteDatabase()).resolves.not.toThrow();
+    });
+  });
+
+  describe('createDatabase', () => {
+    it('should create a new database file', async () => {
+      const tempDbName =
+        'c:\\Users\\Balzer\\VSCode_dev\\io-sqlite-node\\data\\temp_test_db.sqlite';
+      await sVN.createDatabase(tempDbName);
+      expect(sVN.isOpen).toBe(true);
+      await sVN.close();
+      await unlink((sVN as any)._dbFileName);
+    });
+    it('should create an in-memory database', async () => {
+      await sVN.createDatabase();
+      expect(sVN.isOpen).toBe(true);
+      await sVN.close();
     });
   });
 });
