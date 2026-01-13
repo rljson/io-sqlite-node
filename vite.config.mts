@@ -21,6 +21,7 @@ export default defineConfig({
     copyPublicDir: false,
     minify: false,
     // sourcemap: 'inline',
+    ssr: true, // or target: 'node'
 
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -33,6 +34,7 @@ export default defineConfig({
         '@rljson/hash',
         '@rljson/is-ready',
         '@rljson/io',
+        'node:*',
         // 'fs',
         // 'path',
         // 'sql.js',
