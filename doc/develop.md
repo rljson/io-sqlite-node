@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `update-to-match-new-io-interface` here and below
+Replace `new-version` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "update-to-match-new-io-interface "
+node scripts/create-branch.js "new-version "
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"minor-update "
+git commit -am"new-version "
 ```
 
 ## Increase version
