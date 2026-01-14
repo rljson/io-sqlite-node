@@ -20,9 +20,10 @@ import {
 
 import { mkdirSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
-import { dirname, isAbsolute } from 'node:path';
+import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
+import { randomDbName } from './random-db-name.ts';
 import { SqlStatements } from './sql-statements.ts';
 
 export class IoSqliteNode implements Io {
@@ -42,12 +43,7 @@ export class IoSqliteNode implements Io {
   }
 
   async init(): Promise<void> {
-    const randomCode = Math.floor(Math.random() * 10000000000)
-      .toString()
-      .padStart(10, '0');
-    this._dbFileName = `test_${randomCode}.db`;
-    this._createDatabase(`./data/${this._dbFileName}`);
-    this._isOpen = true;
+    this._openOrCreateDatabase();
     this._ioTools = new IoTools(this);
     this._initTableCfgs();
     await this._ioTools.initRevisionsTable();
@@ -58,7 +54,7 @@ export class IoSqliteNode implements Io {
 
   static example = async () => {
     const ioSqliteServer = new IoSqliteNode();
-    // await ioSqliteServer.init();
+    ioSqliteServer.dbFileName = randomDbName();
     return ioSqliteServer;
   };
 
@@ -72,40 +68,6 @@ export class IoSqliteNode implements Io {
         return;
       } else {
         throw err;
-      }
-    }
-  }
-
-  public async deleteDatabase() {
-    if (this._isOpen) {
-      this.db.close();
-      this.db = null as any; // Release the database reference
-      this._isOpen = false;
-    }
-    if (this._persistence) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      let deleted = false;
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        try {
-          await unlink(this._dbFileName!);
-          console.log(`Deleted database file: ${this._dbFileName!}`);
-          deleted = true;
-          break;
-        } catch (error: any) {
-          // v8 ignore next -- @preserve
-          if (error.code === 'ENOENT') {
-            deleted = true;
-            break;
-          }
-          // v8 ignore next -- @preserve
-          if (attempt < 5) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
-        }
-      }
-      // v8 ignore next -- @preserve
-      if (!deleted) {
-        this._undeletedFile = this._dbFileName;
       }
     }
   }
@@ -166,6 +128,8 @@ export class IoSqliteNode implements Io {
     return count;
   }
 
+  // Sqlite-specific functions************************************************
+
   public async execute(sql: string): Promise<any> {
     try {
       const stmt = this.db.prepare(sql);
@@ -186,8 +150,68 @@ export class IoSqliteNode implements Io {
     return this._undeletedFile;
   }
 
-  public async createDatabase(fileName?: string): Promise<void> {
-    this._createDatabase(fileName);
+  public set dbFileName(fileName: string | undefined) {
+    if (!fileName) {
+      this._persistence = false;
+      this._dbFileName = undefined;
+      return;
+    }
+    this._persistence = true;
+    this._dbFileName = `./data/${fileName}`; //store all db files in data folder
+  }
+
+  public get dbFileName(): string | undefined {
+    return this._dbFileName;
+  }
+
+  public async openOrCreateDatabase(): Promise<void> {
+    this._openOrCreateDatabase();
+  }
+
+  private _openOrCreateDatabase(): string {
+    if (!this._dbFileName) {
+      this._persistence = false;
+      this.db = new DatabaseSync(':memory:');
+    } else {
+      mkdirSync(dirname(`${this._dbFileName}`), { recursive: true });
+      this.db = new DatabaseSync(`${this._dbFileName}`);
+      this._persistence = true;
+    }
+
+    this._isOpen = true;
+    return this._persistence ? this._dbFileName! : 'in-memory';
+  }
+
+  public async deleteDatabase() {
+    if (this._isOpen) {
+      this.db.close();
+      this._isOpen = false;
+    }
+    if (this._persistence) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      let deleted = false;
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          await unlink(this._dbFileName!);
+          deleted = true;
+          break;
+        } catch (error: any) {
+          // v8 ignore next -- @preserve
+          if (error.code === 'ENOENT') {
+            deleted = true;
+            break;
+          }
+          // v8 ignore next -- @preserve
+          if (attempt < 5) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+      }
+      // v8 ignore next -- @preserve
+      if (!deleted) {
+        this._undeletedFile = this._dbFileName;
+      }
+    }
   }
 
   //********Private section */
@@ -382,7 +406,6 @@ export class IoSqliteNode implements Io {
         // Run the query
         try {
           this.db.prepare(query).run(...(serializedRow as any[]));
-          console.log(`Inserted row into table ${tableName}`);
         } catch (error) {
           /* v8 ignore next -- @preserve */
           if ((error as any).code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
@@ -549,25 +572,6 @@ export class IoSqliteNode implements Io {
     const alter = this._sql.alterTable(tableKey, addedColumns);
     for (const statement of alter) {
       this.db.prepare(statement).run();
-    }
-  }
-
-  private _createDatabase(fileName?: string): string {
-    if (!fileName) {
-      this._persistence = false;
-      this.db = new DatabaseSync(':memory:');
-      console.log('Created in-memory database');
-      return ':memory:';
-    } else {
-      const isAbsolutePath = isAbsolute(fileName);
-      console.log(`File path is absolute: ${isAbsolutePath}`);
-
-      mkdirSync(dirname(fileName), { recursive: true });
-      this.db = new DatabaseSync(fileName);
-      this._persistence = true;
-      this._dbFileName = fileName;
-      console.log(`Created database file: ${fileName}`);
-      return fileName;
     }
   }
 }
