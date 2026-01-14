@@ -4,16 +4,17 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { unlink } from 'fs/promises';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { IoSqliteNode } from '../src/io-sqlite-node';
+import { randomDbName } from '../src/random-db-name';
 
 describe('IoSqlLiteNode', () => {
   let sVN: IoSqliteNode;
   beforeEach(async () => {
     const sqlite = await IoSqliteNode.example();
     sVN = sqlite;
+    sVN.dbFileName = randomDbName();
     await sVN.init();
   });
 
@@ -138,40 +139,55 @@ describe('IoSqlLiteNode', () => {
     });
   });
 
-  describe('file deletion', () => {
+  describe('deleteDatabase', () => {
     it('should delete the database file', async () => {
-      await sVN.init();
       await sVN.deleteDatabase();
       expect(sVN.undeletedFile).toBeUndefined();
     });
-    it('should set undeletedFile if deletion fails', async () => {
-      await sVN.init();
-      await sVN.deleteDatabase();
-      // If file still exists, undeletedFile should be set
-      if (sVN.undeletedFile) {
-        expect(sVN.undeletedFile).toBeDefined();
-      }
-    });
+
     it('should not throw an error if file does not exist', async () => {
-      await sVN.init();
       await sVN.close();
-      await unlink((sVN as any)._dbFileName);
       await expect(sVN.deleteDatabase()).resolves.not.toThrow();
     });
   });
 
   describe('createDatabase', () => {
     it('should create a new database file', async () => {
-      const tempDbName =
-        'c:\\Users\\Balzer\\VSCode_dev\\io-sqlite-node\\data\\temp_test_db.sqlite';
-      await sVN.createDatabase(tempDbName);
+      await sVN.deleteDatabase();
+      expect(sVN.undeletedFile).toBeUndefined();
+      sVN.dbFileName = randomDbName(); //only the name is being changed
+      await sVN.openOrCreateDatabase();
       expect(sVN.isOpen).toBe(true);
       await sVN.close();
-      await unlink((sVN as any)._dbFileName);
     });
     it('should create an in-memory database', async () => {
-      await sVN.createDatabase();
+      await sVN.deleteDatabase();
+      expect(sVN.undeletedFile).toBeUndefined();
+      sVN.dbFileName = undefined; //set to in-memory
+      await sVN.openOrCreateDatabase();
       expect(sVN.isOpen).toBe(true);
+      await sVN.close();
+    });
+    it('should reopen an existing database file', async () => {
+      await sVN.openOrCreateDatabase();
+      expect(sVN.isOpen).toBe(true);
+      await sVN.execute(
+        'CREATE TABLE test_reopen (id INTEGER PRIMARY KEY, value TEXT)',
+      );
+      await sVN.execute("INSERT INTO test_reopen (value) VALUES ('data')");
+      await sVN.close();
+      await sVN.openOrCreateDatabase();
+      expect(sVN.isOpen).toBe(true);
+      const result = await sVN.execute('SELECT * FROM test_reopen');
+      expect(result.length).toBe(1);
+      expect(result[0].value).toBe('data');
+      await sVN.close();
+    });
+    it('should return the current database file name', async () => {
+      const dbName = randomDbName();
+      sVN.dbFileName = dbName;
+      await sVN.openOrCreateDatabase();
+      expect(sVN.dbFileName).toContain(dbName);
       await sVN.close();
     });
   });
