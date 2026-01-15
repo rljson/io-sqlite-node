@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `minor change` here and below
+Replace `entry point changed` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "minor change "
+node scripts/create-branch.js "entry point changed "
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"minor change"
+git commit -am"entry point changed"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "minor change" --body " "
+gh pr create --base main --title "entry point changed" --body " "
 ```
 
 ## Code review
