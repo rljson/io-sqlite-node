@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io-sqlite-node",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "IoSql rljson files",
   "homepage": "https://github.com/rljson/io-sqlite_node",
   "bugs": "https://github.com/rljson/io-sqlite-node/issues",
@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/rljson/io-sqlite-node.git"
   },
-  "main": "dist/io-sqlite-node.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
