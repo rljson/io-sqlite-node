@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `new-version` here and below
+Replace `minor change` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "new-version "
+node scripts/create-branch.js "minor change "
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"new-version "
+git commit -am"minor change"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "new version " --body " "
+gh pr create --base main --title "minor change" --body " "
 ```
 
 ## Code review
