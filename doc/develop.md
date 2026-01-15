@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "minor-update " --body " "
+gh pr create --base main --title "new version " --body " "
 ```
 
 ## Code review
