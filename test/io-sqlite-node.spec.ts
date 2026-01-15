@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { IoSqliteNode } from '../src/io-sqlite-node';
 import { randomDbName } from '../src/random-db-name';
 
+
 describe('IoSqlLiteNode', () => {
   let sVN: IoSqliteNode;
   beforeEach(async () => {
@@ -16,6 +17,7 @@ describe('IoSqlLiteNode', () => {
     sVN = sqlite;
     sVN.dbFileName = randomDbName();
     await sVN.init();
+    await sVN.isReady();
   });
 
   afterEach(async () => {
@@ -90,21 +92,20 @@ describe('IoSqlLiteNode', () => {
   });
   describe('status properties', () => {
     describe('isOpen', () => {
-      it('should return true when database is open', () => {
-        sVN.init();
+      it('should return true when database is open', async () => {
         expect(sVN.isOpen).toBe(true);
       });
 
-      it('should return false when database is closed', () => {
-        sVN.close();
+      it('should return false when database is closed', async () => {
+        await sVN.close();
         expect(sVN.isOpen).toBe(false);
       });
     });
 
     describe('isReady', () => {
       it('should return true when database is initialized', async () => {
-        const result = sVN.isReady();
-        expect(result).toBeInstanceOf(Promise);
+        const result = await sVN.isReady();
+        expect(result).toBe(undefined);
       });
     });
   });
@@ -120,19 +121,18 @@ describe('IoSqlLiteNode', () => {
       await example.init();
       const result = example.isOpen;
       expect(result).toBe(true);
+      example.deleteDatabase();
     });
   });
 
   describe('dumps', () => {
     it('should work for all tables', async () => {
-      await sVN.init();
       const dump = await sVN.dump();
       expect(dump).toBeDefined();
       expect(typeof dump).toBe('object');
     });
 
     it('should work for a single table', async () => {
-      await sVN.init();
       const dump = await sVN.dumpTable({ table: 'tableCfgs' });
       expect(dump).toBeDefined();
       expect(typeof dump).toBe('object');
@@ -169,6 +169,7 @@ describe('IoSqlLiteNode', () => {
       await sVN.close();
     });
     it('should reopen an existing database file', async () => {
+      await sVN.close();
       await sVN.openOrCreateDatabase();
       expect(sVN.isOpen).toBe(true);
       await sVN.execute(
@@ -184,11 +185,11 @@ describe('IoSqlLiteNode', () => {
       await sVN.close();
     });
     it('should return the current database file name', async () => {
+      await sVN.deleteDatabase();
       const dbName = randomDbName();
       sVN.dbFileName = dbName;
       await sVN.openOrCreateDatabase();
       expect(sVN.dbFileName).toContain(dbName);
-      await sVN.close();
     });
   });
 });
