@@ -4,6 +4,10 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { IoSqliteNode } from '../src/io-sqlite-node';
@@ -184,6 +188,34 @@ describe('IoSqlLiteNode', () => {
       expect(result[0].value).toBe('data');
       await sVN.close();
     });
+    // A caller that has already decided where its database belongs — beside the
+    // data it describes — must be able to say so. Prefixing an absolute path
+    // produced `./data//Users/.../tree.sqlite`, a path relative to whatever
+    // directory the process happened to start in, which for a service is
+    // anywhere at all. Two callers pointing at different folders would also
+    // collide under a single `./data`.
+    it('takes an absolute path as given', async () => {
+      await sVN.deleteDatabase();
+      const absolute = join(tmpdir(), `abs-${randomDbName()}`);
+      sVN.dbFileName = absolute;
+      expect(sVN.dbFileName).toBe(absolute);
+      await sVN.openOrCreateDatabase();
+      expect(sVN.isOpen).toBe(true);
+      expect(existsSync(absolute)).toBe(true);
+      await sVN.close();
+      rmSync(absolute, { force: true });
+    });
+
+    // A bare name still lands in ./data, so existing callers are unaffected.
+    it('still puts a bare name under ./data', async () => {
+      await sVN.deleteDatabase();
+      const bare = randomDbName();
+      sVN.dbFileName = bare;
+      expect(sVN.dbFileName).toBe(`./data/${bare}`);
+      await sVN.openOrCreateDatabase();
+      await sVN.close();
+    });
+
     it('should return the current database file name', async () => {
       await sVN.deleteDatabase();
       const dbName = randomDbName();

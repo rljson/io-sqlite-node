@@ -20,7 +20,7 @@ import {
 
 import { mkdirSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 import { randomDbName } from './random-db-name.ts';
@@ -157,7 +157,17 @@ export class IoSqliteNode implements Io {
       return;
     }
     this._persistence = true;
-    this._dbFileName = `./data/${fileName}`; //store all db files in data folder
+
+    // An absolute path is taken as given. Prefixing it produced
+    // `./data//Users/.../tree.sqlite` — a path relative to whatever the process
+    // happened to be started in, which for a service is anywhere at all. A
+    // caller that has already decided where its database belongs, next to the
+    // data it describes, must be able to say so.
+    //
+    // A bare name still lands in `./data`, so existing callers are unaffected.
+    this._dbFileName = isAbsolute(fileName)
+      ? fileName
+      : `./data/${fileName}`;
   }
 
   public get dbFileName(): string | undefined {
