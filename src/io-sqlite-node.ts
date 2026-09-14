@@ -548,8 +548,21 @@ export class IoSqliteNode implements Io {
     const tableKeyWithSuffix = this._map.addTableSuffix(request.table);
     const tableCfg = await this._ioTools.tableCfg(request.table);
 
+    // No filter means EVERY row, not a syntax error. `SELECT * FROM t WHERE`
+    // with nothing after it is what sqlite reports as "incomplete input", and
+    // because the message names neither the table nor the statement it is
+    // almost unreadable from a caller's side: on the lab it surfaced as
+    // `pump e2eProbe change failed, skipped: Error: incomplete input`, three
+    // documents silently never entering the edit chain and never propagating.
+    //
+    // `{}` is an ordinary request — `IoMem` and the other backends have always
+    // answered it with the whole table — so this is this backend catching up
+    // with the contract, not a change to it.
     const whereString = this._whereString(Object.entries(request.where));
-    const query = `SELECT * FROM ${tableKeyWithSuffix} WHERE${whereString}`;
+    const query =
+      whereString.trim().length === 0
+        ? `SELECT * FROM ${tableKeyWithSuffix}`
+        : `SELECT * FROM ${tableKeyWithSuffix} WHERE${whereString}`;
     const resultSet = this.db.prepare(query).all();
 
     const convertedResult = this._parseData(resultSet as Json[], tableCfg);

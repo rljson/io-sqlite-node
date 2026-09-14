@@ -129,6 +129,32 @@ describe('IoSqlLiteNode', () => {
     });
   });
 
+  describe('readRows', () => {
+    it('returns every row when the where clause is empty', async () => {
+      // `{}` is no filter, so the answer is the whole table. This backend
+      // built `SELECT * FROM t WHERE` with nothing after it, which sqlite
+      // refuses as "incomplete input" — a message naming neither the table nor
+      // the statement, and so nearly unreadable from a caller's side. On the
+      // lab it surfaced as
+      //
+      //   pump e2eProbe change failed, skipped: Error: incomplete input
+      //
+      // three documents that never entered the edit chain and so never reached
+      // another machine, with a green sync report the whole time. Every mesh
+      // test uses `IoMem`, which has always answered `{}` with all rows — which
+      // is exactly why the suites stayed green while the lab did not.
+      const all = await sVN.readRows({ table: 'tableCfgs', where: {} });
+      const rows = all['tableCfgs']._data as Array<{ key: string }>;
+      expect(rows.length).toBeGreaterThan(0);
+
+      // The same rows a dump reports, so "everything" means everything.
+      const dumped = await sVN.dumpTable({ table: 'tableCfgs' });
+      expect(rows.length).toBe(
+        (dumped['tableCfgs']._data as unknown[]).length,
+      );
+    });
+  });
+
   describe('dumps', () => {
     it('should work for all tables', async () => {
       const dump = await sVN.dump();
