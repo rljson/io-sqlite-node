@@ -10,6 +10,8 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { exampleTableCfg, TableCfg } from '@rljson/rljson';
+
 import { IoSqliteNode } from '../src/io-sqlite-node';
 import { randomDbName } from '../src/random-db-name';
 
@@ -126,6 +128,66 @@ describe('IoSqlLiteNode', () => {
       const result = example.isOpen;
       expect(result).toBe(true);
       example.deleteDatabase();
+    });
+  });
+
+  describe('write', () => {
+    it('survives two writes that overlap on one connection', async () => {
+      // One connection cannot hold two transactions. `_write` wraps its inserts
+      // in one and used to `await` inside it, so a second writer reaching
+      // `write` while the first was still in its transaction ran straight into
+      //
+      //   Error: cannot start a transaction within a transaction
+      //
+      // On the lab this took the node down: the rejection came out of a
+      // `Promise.all` in an import started by the mongo edit chain, nothing on
+      // that path caught it, and the service restarted in a loop. Two writers
+      // sharing one Io is ordinary — the import itself writes its parts with
+      // `Promise.all` — so this must simply queue.
+      const tableCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
+      await sVN.createOrExtendTable({ tableCfg });
+
+      await Promise.all([
+        sVN.write({
+          data: {
+            tableA: { _type: 'components', _data: [{ a: 'first', b: 1 }] },
+          },
+        }),
+        sVN.write({
+          data: {
+            tableA: { _type: 'components', _data: [{ a: 'second', b: 2 }] },
+          },
+        }),
+      ]);
+
+      // Both writes are there: queueing must not drop one.
+      const dump = await sVN.dumpTable({ table: 'tableA' });
+      const rows = dump['tableA']._data as Array<{ a: string }>;
+      expect(rows.map((r) => r.a).sort()).toEqual(['first', 'second']);
+    });
+
+    it('keeps accepting writes after one of them failed', async () => {
+      // The queue carries every later write. If a rejected write were left in
+      // it, one bad write would fail all writes that follow — a far worse
+      // failure than the one being fixed.
+      const tableCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
+      await sVN.createOrExtendTable({ tableCfg });
+
+      await expect(
+        sVN.write({
+          data: {
+            missingTable: { _type: 'components', _data: [{ a: 'x' }] },
+          },
+        }),
+      ).rejects.toThrow();
+
+      await sVN.write({
+        data: { tableA: { _type: 'components', _data: [{ a: 'after', b: 3 }] } },
+      });
+
+      const dump = await sVN.dumpTable({ table: 'tableA' });
+      const rows = dump['tableA']._data as Array<{ a: string }>;
+      expect(rows.map((r) => r.a)).toEqual(['after']);
     });
   });
 
