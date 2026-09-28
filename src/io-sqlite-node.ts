@@ -34,6 +34,7 @@ export class IoSqliteNode implements Io {
   private _persistence: boolean = true;
   private _dbFileName: string | undefined;
   private _undeletedFile: string | undefined;
+  private _writeQueue: Promise<void> = Promise.resolve();
   constructor() {
     this._sql = new SqlStatements();
   }
@@ -109,8 +110,25 @@ export class IoSqliteNode implements Io {
     return parsedReturnValue as TableCfg[];
   }
 
+  // A single connection cannot hold two transactions, and `_write` wraps its
+  // inserts in one. Two overlapping `write` calls — one Io shared by several
+  // writers, e.g. `Promise.all` over the parts of one import — used to let the
+  // second reach `BEGIN` while the first was still inside its transaction, and
+  // SQLite answered `cannot start a transaction within a transaction`. The
+  // rejection travelled up an async caller that did not catch it and took the
+  // process down. Writes are therefore queued per instance: they still all
+  // happen, one after the other.
   async write(request: { data: Rljson }): Promise<void> {
-    await this._write(request);
+    const result = this._writeQueue.then(() => this._write(request));
+
+    // The queue must not stay rejected, or one failed write would fail every
+    // later one. The caller still sees the rejection through `result`.
+    this._writeQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return result;
   }
 
   readRows(request: {
@@ -405,12 +423,13 @@ export class IoSqliteNode implements Io {
     // every row of a table. It was being rebuilt inside the row loop with a
     // comment explaining that rows might differ in shape; they do not — a row
     // that did would fail `throwWhenTableDataDoesNotMatchCfg` above.
-    this.db.exec('BEGIN');
-    let committed = false;
+    // The table configs are read before the transaction opens. Everything
+    // between BEGIN and COMMIT has to run without an `await` in it: an await
+    // inside the transaction hands the event loop to whoever else shares this
+    // connection, and the next writer's BEGIN then lands inside this one.
+    const plan: { tableName: string; tableCfg: TableCfg; query: string }[] = [];
 
-    try {
-      // Loop through the tables in the data
-      await iterateTables(hashedData, async (tableName, tableData) => {
+    await iterateTables(hashedData, async (tableName) => {
       const tableCfg = await this._ioTools.tableCfg(tableName);
 
       // Create internal table name
@@ -424,35 +443,46 @@ export class IoSqliteNode implements Io {
       const query = `INSERT OR IGNORE INTO ${tableKeyWithSuffix} (${columnKeysWithPostfix.join(
         ', ',
       )}) VALUES (${placeholders})`;
-      const statement = this.db.prepare(query);
 
-      for (const row of tableData._data) {
-        // Put values into the necessary format
-        const serializedRow = this._serializeRow(row, tableCfg);
+      plan.push({ tableName, tableCfg, query });
+    });
 
-        // Run the query
-        try {
-          statement.run(...(serializedRow as any[]));
-        } catch (error) {
-          /* v8 ignore next -- @preserve */
-          if ((error as any).code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
-            return;
+    this.db.exec('BEGIN');
+    let committed = false;
+
+    try {
+      // Loop through the tables in the data
+      for (const { tableName, tableCfg, query } of plan) {
+        const statement = this.db.prepare(query);
+        const tableData = (hashedData as any)[tableName] as TableType;
+
+        for (const row of tableData._data) {
+          // Put values into the necessary format
+          const serializedRow = this._serializeRow(row, tableCfg);
+
+          // Run the query
+          try {
+            statement.run(...(serializedRow as any[]));
+          } catch (error) {
+            /* v8 ignore next -- @preserve */
+            if ((error as any).code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
+              continue;
+            }
+            /* v8 ignore next -- @preserve */
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+
+            /* v8 ignore next -- @preserve */
+            errorCount++;
+
+            /* v8 ignore next -- @preserve */
+            errorStore.set(
+              errorCount,
+              `Error inserting into table ${tableName}: ${errorMessage}`,
+            );
           }
-          /* v8 ignore next -- @preserve */
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-
-          /* v8 ignore next -- @preserve */
-          errorCount++;
-
-          /* v8 ignore next -- @preserve */
-          errorStore.set(
-            errorCount,
-            `Error inserting into table ${tableName}: ${errorMessage}`,
-          );
         }
       }
-      });
 
       // Committed even when individual rows failed, so the existing behaviour
       // is preserved: row errors are collected and reported below, and the rows
