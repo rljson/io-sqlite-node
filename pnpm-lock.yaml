@@ -4,25 +4,33 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@rljson/hash': link:./.gg/ts_links/@rljson/hash
+  '@rljson/io': link:./.gg/ts_links/@rljson/io
+  '@rljson/is-ready': link:./.gg/ts_links/@rljson/is-ready
+  '@rljson/dna-rljson': link:../dna_rljson
+  '@rljson/rljson': link:./.gg/ts_links/@rljson/rljson
+  '@rljson/validate': link:./.gg/ts_links/@rljson/validate
+
 importers:
 
   .:
     dependencies:
       '@rljson/hash':
-        specifier: ^0.0.17
-        version: 0.0.17
+        specifier: link:.gg/ts_links/@rljson/hash
+        version: link:.gg/ts_links/@rljson/hash
       '@rljson/io':
-        specifier: ^0.0.63
-        version: 0.0.63
+        specifier: link:.gg/ts_links/@rljson/io
+        version: link:.gg/ts_links/@rljson/io
       '@rljson/is-ready':
-        specifier: ^0.0.17
-        version: 0.0.17
+        specifier: link:.gg/ts_links/@rljson/is-ready
+        version: link:.gg/ts_links/@rljson/is-ready
       '@rljson/json':
         specifier: ^0.0.23
         version: 0.0.23
       '@rljson/rljson':
-        specifier: ^0.0.73
-        version: 0.0.73
+        specifier: link:.gg/ts_links/@rljson/rljson
+        version: link:.gg/ts_links/@rljson/rljson
       path-browserify:
         specifier: ^1.0.1
         version: 1.0.1
@@ -101,17 +109,6 @@ importers:
         version: 0.1.1(vitest@4.0.17(@types/node@25.0.8))
 
 packages:
-
-  '@aws-crypto/sha256-js@5.2.0':
-    resolution: {integrity: sha512-FFQQyu7edu4ufvIZ+OadFpHHOt+eSTBaYaki44c+akjg7qZg9oOQeLlk77F6tSYqjDAFClrHJk9tMf0HdVyOvA==}
-    engines: {node: '>=16.0.0'}
-
-  '@aws-crypto/util@5.2.0':
-    resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
-
-  '@aws-sdk/types@3.969.0':
-    resolution: {integrity: sha512-7IIzM5TdiXn+VtgPdVLjmE6uUBUtnga0f4RiSEI1WW10RPuNvZ9U+pL3SwDiRDAdoGrOF9tSLJOFZmfuwYuVYQ==}
-    engines: {node: '>=20.0.0'}
 
   '@babel/code-frame@7.28.6':
     resolution: {integrity: sha512-JYgintcMjRiCvS8mMECzaEn+m3PfoQiyqukOMCCVQtoJGYJw8j/8LBJEiqkHLkfwCcs74E3pbAUFNg7d9VNJ+Q==}
@@ -406,40 +403,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@rljson/hash@0.0.16':
-    resolution: {integrity: sha512-RbMQUEP4uhSTVArvRRXR73bXyQRbghuYzhzQiJyDyTsyFJiDbEcSKEyU1VYbJ3PPEu6HUklRx6ieZC0kPGDEcQ==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/hash@0.0.17':
-    resolution: {integrity: sha512-yZySXCa07gyo/HTuUaL/3gyq8kP94c6ZIWFEMZTNDeSVz568YKvj1fdEXG6PApg39HD5UeO/jkNE484McoP5Rg==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/io@0.0.63':
-    resolution: {integrity: sha512-XwzkD/Hp+CmPtlBeNkd6B0JjdpFXm3tK/uYnAS3k0CyjI8HSc6FMU4/f2fmt+Ka74RUeZFOZN8voenJ0iLrsYA==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/is-ready@0.0.17':
-    resolution: {integrity: sha512-rSDcGRWIngcOPJ/uE2kHGBhVoo/jEBKlmeJ5BdeDcSi3i6KrFIsIYepOJvybMc8+gcCOgecivCpPRd4fHksdcA==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/json@0.0.21':
-    resolution: {integrity: sha512-oNDY2B6HgHSzbaRh2fU8tTEEChuCzJU2sF9yzLYzS9jryT13XyfvSO13WkkPXgpMCe78AuIaGwbusNg8YARrdA==}
-    engines: {node: '>=22.14.0'}
-
   '@rljson/json@0.0.23':
     resolution: {integrity: sha512-ViYo8zx0z/SomjpS2f+xK+tS7HTwZI1HzRarHpXO3spVjpaF+GKCa7HgDXoV/Wc+zsliDzo8wz7S5NFb0yZaow==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/rljson@0.0.55':
-    resolution: {integrity: sha512-anRhE21B5VEqTlDjcJy3ce7yrTZ/hwPN3C4YQCd1FnFfJZI4mjhlnygvCBhSR9WDLnIAxDFERFBt20f57PVBsQ==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/rljson@0.0.73':
-    resolution: {integrity: sha512-kZnPBPd20rtPcgvpClgAQg+rrFJ/xoGlIWeKxn5lggNc0cGyns8Fixdyti/VPMJdFXWNtHPvZyUczeXCvTwTEA==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/validate@0.0.11':
-    resolution: {integrity: sha512-XigbFKLQMLb420UwgwRDRRWdbsL6wNv3l7dxQqs/Z66EQhEPtoc0FSGLfIFM5X4gPd1zJFTIUIwcUOv47PjFkw==}
     engines: {node: '>=22.14.0'}
 
   '@rollup/plugin-inject@5.0.5':
@@ -618,22 +583,6 @@ packages:
   '@sindresorhus/base62@1.0.0':
     resolution: {integrity: sha512-TeheYy0ILzBEI/CO55CP6zJCSdSWeRtGnHy8U8dWSUH4I68iqTsy7HkMktR4xakThc9jotkPQUXT4ITdbV7cHA==}
     engines: {node: '>=18'}
-
-  '@smithy/is-array-buffer@2.2.0':
-    resolution: {integrity: sha512-GGP3O9QFD24uGeAXYUjwSTXARoqpZykHadOmA8G5vfJPK0/DC67qa//0qvqrJzL1xc8WQWX7/yc7fwudjPHPhA==}
-    engines: {node: '>=14.0.0'}
-
-  '@smithy/types@4.12.0':
-    resolution: {integrity: sha512-9YcuJVTOBDjg9LWo23Qp0lTQ3D7fQsQtwle0jVfpbUHy9qBwCEgKuVH4FqFB3VYu0nwdHKiEMA+oXz7oV8X1kw==}
-    engines: {node: '>=18.0.0'}
-
-  '@smithy/util-buffer-from@2.2.0':
-    resolution: {integrity: sha512-IJdWBbTcMQ6DA0gdNhh/BwrLkDR+ADW5Kr1aZmd4k3DIF6ezMV4R2NIAmT08wQJ3yUK82thHWmC/TnK/wpMMIA==}
-    engines: {node: '>=14.0.0'}
-
-  '@smithy/util-utf8@2.3.0':
-    resolution: {integrity: sha512-R8Rdn8Hy72KKcebgLiv8jQcQkXoLMOGGv5uI1/k0l+snqkOzQ1R0ChUBCxWMlBsFMekWjq0wRudIweFs7sKT5A==}
-    engines: {node: '>=14.0.0'}
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -1508,9 +1457,6 @@ packages:
   jju@1.4.0:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
 
-  js-base64@3.7.8:
-    resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
-
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -1673,11 +1619,6 @@ packages:
   nanoid@3.3.11:
     resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
-  nanoid@5.1.6:
-    resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
-    engines: {node: ^18 || >=20}
     hasBin: true
 
   natural-compare@1.4.0:
@@ -2130,9 +2071,6 @@ packages:
       typescript:
         optional: true
 
-  tslib@2.8.1:
-    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
-
   tty-browserify@0.0.1:
     resolution: {integrity: sha512-C3TaO7K81YvjCgQH9Q1S3R3P3BtN3RIM8n+OvX4il1K1zgE8ZhI0op7kClgkxtutIE8hQrcrHBXvIheqKUUCxw==}
 
@@ -2357,23 +2295,6 @@ packages:
     engines: {node: '>=10'}
 
 snapshots:
-
-  '@aws-crypto/sha256-js@5.2.0':
-    dependencies:
-      '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.969.0
-      tslib: 2.8.1
-
-  '@aws-crypto/util@5.2.0':
-    dependencies:
-      '@aws-sdk/types': 3.969.0
-      '@smithy/util-utf8': 2.3.0
-      tslib: 2.8.1
-
-  '@aws-sdk/types@3.969.0':
-    dependencies:
-      '@smithy/types': 4.12.0
-      tslib: 2.8.1
 
   '@babel/code-frame@7.28.6':
     dependencies:
@@ -2610,48 +2531,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@rljson/hash@0.0.16':
-    dependencies:
-      '@aws-crypto/sha256-js': 5.2.0
-      '@rljson/json': 0.0.21
-      js-base64: 3.7.8
-
-  '@rljson/hash@0.0.17':
-    dependencies:
-      '@aws-crypto/sha256-js': 5.2.0
-      '@rljson/json': 0.0.21
-      js-base64: 3.7.8
-
-  '@rljson/io@0.0.63':
-    dependencies:
-      '@rljson/hash': 0.0.17
-      '@rljson/is-ready': 0.0.17
-      '@rljson/json': 0.0.23
-      '@rljson/rljson': 0.0.73
-      '@rljson/validate': 0.0.11
-
-  '@rljson/is-ready@0.0.17': {}
-
-  '@rljson/json@0.0.21': {}
-
   '@rljson/json@0.0.23': {}
-
-  '@rljson/rljson@0.0.55':
-    dependencies:
-      '@rljson/hash': 0.0.16
-      '@rljson/json': 0.0.21
-
-  '@rljson/rljson@0.0.73':
-    dependencies:
-      '@rljson/hash': 0.0.17
-      '@rljson/json': 0.0.23
-      nanoid: 5.1.6
-
-  '@rljson/validate@0.0.11':
-    dependencies:
-      '@rljson/hash': 0.0.16
-      '@rljson/json': 0.0.21
-      '@rljson/rljson': 0.0.55
 
   '@rollup/plugin-inject@5.0.5(rollup@4.55.1)':
     dependencies:
@@ -2784,24 +2664,6 @@ snapshots:
       - '@types/node'
 
   '@sindresorhus/base62@1.0.0': {}
-
-  '@smithy/is-array-buffer@2.2.0':
-    dependencies:
-      tslib: 2.8.1
-
-  '@smithy/types@4.12.0':
-    dependencies:
-      tslib: 2.8.1
-
-  '@smithy/util-buffer-from@2.2.0':
-    dependencies:
-      '@smithy/is-array-buffer': 2.2.0
-      tslib: 2.8.1
-
-  '@smithy/util-utf8@2.3.0':
-    dependencies:
-      '@smithy/util-buffer-from': 2.2.0
-      tslib: 2.8.1
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -3842,8 +3704,6 @@ snapshots:
 
   jju@1.4.0: {}
 
-  js-base64@3.7.8: {}
-
   js-tokens@4.0.0: {}
 
   js-tokens@9.0.1: {}
@@ -4015,8 +3875,6 @@ snapshots:
   muggle-string@0.4.1: {}
 
   nanoid@3.3.11: {}
-
-  nanoid@5.1.6: {}
 
   natural-compare@1.4.0: {}
 
@@ -4521,8 +4379,6 @@ snapshots:
   tsconfck@3.1.6(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
-
-  tslib@2.8.1: {}
 
   tty-browserify@0.0.1: {}
 
