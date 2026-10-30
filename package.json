@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io-sqlite-node",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "IoSql rljson files",
   "homepage": "https://github.com/rljson/io-sqlite_node",
   "bugs": "https://github.com/rljson/io-sqlite-node/issues",
@@ -29,7 +29,7 @@
     "installConformanceTests": "node scripts/install-conformance-tests.js"
   },
   "devDependencies": {
-    "@rljson/dna-rljson": "^0.3.1",
+    "@rljson/dna-rljson": "^0.3.2",
     "@tssuite/helix-js": "^0.5.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.6",
@@ -55,11 +55,11 @@
     "vitest-dom": "^0.1.1"
   },
   "dependencies": {
-    "@rljson/hash": "^0.0.20",
-    "@rljson/io": "^0.0.86",
-    "@rljson/is-ready": "^0.0.20",
+    "@rljson/hash": "^0.0.21",
+    "@rljson/io": "^0.0.87",
+    "@rljson/is-ready": "^0.0.21",
     "@rljson/json": "^0.0.23",
-    "@rljson/rljson": "^0.0.87",
+    "@rljson/rljson": "^0.0.88",
     "path-browserify": "^1.0.1",
     "shx": "^0.4.0",
     "sql.js": "^1.15.2"

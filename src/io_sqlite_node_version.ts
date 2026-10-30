@@ -2,4 +2,4 @@
 // Kept in sync by test/io_sqlite_node_version.spec.ts.
 
 /** The version of the `@rljson/io-sqlite-node` package. */
-export const ioSqliteNodeVersion = '1.0.9';
+export const ioSqliteNodeVersion = '1.0.10';
