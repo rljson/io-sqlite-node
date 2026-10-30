@@ -1015,6 +1015,60 @@ export const runIoConformanceTests = (
       });
     });
 
+    describe('readRowsByHashes(request) — optional', () => {
+      // An Io may leave batch reads out; callers then read one hash at a time.
+      // A store that leaves it out skips these, visibly, instead of passing.
+      const writeRows = async (count: number) => {
+        await createExampleTable('table1');
+        const rows = Array.from({ length: count }, (_, i) =>
+          hip({ a: `a${i}` }),
+        );
+        await io.write({
+          data: { table1: { _type: 'components', _data: rows } },
+        });
+        return rows.map((row) => row._hash as string);
+      };
+
+      const readHashes = async (hashes: string[]) => {
+        const result = await io.readRowsByHashes!({ table: 'table1', hashes });
+        expect(result.table1._type).toBe('components');
+        return result.table1._data.map((row) => row._hash as string).sort();
+      };
+
+      it('returns the rows of present hashes and leaves out missing ones', async (ctx) => {
+        if (!io.readRowsByHashes) ctx.skip();
+        const [h0, , h2] = await writeRows(3);
+        expect(await readHashes([h0, 'missingHash', h2])).toEqual(
+          [h0, h2].sort(),
+        );
+      });
+
+      it('returns each row once for a hash asked for twice', async (ctx) => {
+        if (!io.readRowsByHashes) ctx.skip();
+        const [h0] = await writeRows(1);
+        expect(await readHashes([h0, h0])).toEqual([h0]);
+      });
+
+      it('returns an empty table for no hashes', async (ctx) => {
+        if (!io.readRowsByHashes) ctx.skip();
+        await writeRows(1);
+        expect(await readHashes([])).toEqual([]);
+      });
+
+      it('reads more hashes than one request of a peer carries', async (ctx) => {
+        if (!io.readRowsByHashes) ctx.skip();
+        const hashes = await writeRows(250);
+        expect(await readHashes(hashes)).toEqual([...hashes].sort());
+      });
+
+      it('throws when the table does not exist', async (ctx) => {
+        if (!io.readRowsByHashes) ctx.skip();
+        await expect(
+          io.readRowsByHashes!({ table: 'nonexistentTable', hashes: [] }),
+        ).rejects.toThrow('Table "nonexistentTable" not found');
+      });
+    });
+
     describe('dump()', () => {
       it('returns a copy of the complete database', async () => {
         const dump = await io.dump();
