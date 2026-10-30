@@ -29,7 +29,7 @@
     "installConformanceTests": "node scripts/install-conformance-tests.js"
   },
   "devDependencies": {
-    "@rljson/dna-rljson": "link:../dna_rljson",
+    "@rljson/dna-rljson": "^0.3.0",
     "@tssuite/helix-js": "^0.5.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.6",
