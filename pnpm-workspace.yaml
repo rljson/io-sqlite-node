@@ -1,0 +1,8 @@
+# Created by gg_localize_refs. The overrides section redirects
+# the dependencies of package.json to the sibling checkouts of
+# this workspace without touching their published constraints.
+# change-refs-to-pub-dev removes the section again.
+overrides:
+  "@rljson\/io": link:./.gg/ts_links/@rljson/io
+  "@rljson\/rljson": link:./.gg/ts_links/@rljson/rljson
+  "@rljson\/validate": link:./.gg/ts_links/@rljson/validate
