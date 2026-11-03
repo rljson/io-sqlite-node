@@ -36,7 +36,7 @@
     "@types/sql.js": "^1.4.11",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^8.72.1",
-    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/coverage-v8": "^5.1.0",
     "cross-env": "^10.1.0",
     "eslint": "^10.14.0",
     "eslint-plugin-jsdoc": "^65.4.2",
@@ -51,7 +51,7 @@
     "vite-plugin-dts": "^5.1.2",
     "vite-plugin-node-polyfills": "^0.28.0",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^5.0.5",
+    "vitest": "^5.1.0",
     "vitest-dom": "^0.1.1"
   },
   "dependencies": {
