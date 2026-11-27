@@ -4,7 +4,6 @@
 # change-refs-to-pub-dev removes the section again.
 overrides:
   "@rljson\/hash": link:./.gg/ts_links/@rljson/hash
-  "@rljson\/dna-rljson": link:../dna_rljson
   "@rljson\/io": link:./.gg/ts_links/@rljson/io
   "@rljson\/is-ready": link:./.gg/ts_links/@rljson/is-ready
   "@rljson\/rljson": link:./.gg/ts_links/@rljson/rljson
