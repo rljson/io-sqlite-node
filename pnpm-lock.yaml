@@ -16,19 +16,19 @@ importers:
   .:
     dependencies:
       '@rljson/hash':
-        specifier: link:.gg\ts_links\@rljson\hash
+        specifier: link:.gg/ts_links/@rljson/hash
         version: link:.gg/ts_links/@rljson/hash
       '@rljson/io':
-        specifier: link:.gg\ts_links\@rljson\io
+        specifier: link:.gg/ts_links/@rljson/io
         version: link:.gg/ts_links/@rljson/io
       '@rljson/is-ready':
-        specifier: link:.gg\ts_links\@rljson\is-ready
+        specifier: link:.gg/ts_links/@rljson/is-ready
         version: link:.gg/ts_links/@rljson/is-ready
       '@rljson/json':
         specifier: ^0.0.23
         version: 0.0.23
       '@rljson/rljson':
-        specifier: link:.gg\ts_links\@rljson\rljson
+        specifier: link:.gg/ts_links/@rljson/rljson
         version: link:.gg/ts_links/@rljson/rljson
       path-browserify:
         specifier: ^1.0.1
